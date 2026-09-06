@@ -37,7 +37,9 @@ async fn main() -> anyhow::Result<()> {
         )
         .route(
             "/families/{id}",
-            axum::routing::get(handlers::get_family).put(handlers::update_family),
+            axum::routing::get(handlers::get_family)
+                .put(handlers::update_family)
+                .delete(handlers::delete_family),
         )
         .with_state(state);
 

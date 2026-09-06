@@ -96,3 +96,30 @@ pub async fn update_family(
 
     Ok(Json(family.into()))
 }
+
+pub async fn delete_family(
+    State(state): State<AppState>,
+    Path(id): Path<u64>,
+) -> Result<StatusCode, ApiError> {
+    let mut guard = state.db.lock().await;
+    let db = &mut *guard;
+
+    let family: Vec<Family> = Family::filter(Family::fields().id().eq(id))
+        .exec(db)
+        .await?;
+
+    let mut family = match family.into_iter().next() {
+        Some(family) => family,
+        None => return Err(ApiError::NotFound),
+    };
+
+    if family.deleted_at.is_none() {
+        toasty::update!(family {
+            deleted_at: Some(jiff::Timestamp::now()),
+        })
+        .exec(db)
+        .await?;
+    }
+
+    Ok(StatusCode::NO_CONTENT)
+}
