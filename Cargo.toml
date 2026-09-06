@@ -1,0 +1,13 @@
+[package]
+name = "learn-toasty-axum"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1.53.1", features = ["macros", "rt-multi-thread"] }
+axum = { version = "0.8.9", features = [] }
+axum-extra = { version = "0.12.6", features = [] }
+serde = { version = "1.0", features = ["derive"] }
+chrono = { version = "0.4.45" }
+thiserror = { version = "2.0.20" }
+tracing = { version = "0.1.44" }
