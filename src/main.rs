@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use axum::{Router, routing::get};
 
+mod error;
 mod handlers;
 mod models;
 
@@ -30,6 +31,10 @@ async fn main() -> anyhow::Result<()> {
 
     let app = Router::new()
         .route("/", get(handlers::health))
+        .route(
+            "/families",
+            axum::routing::get(handlers::list_families).post(handlers::create_family),
+        )
         .with_state(state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
