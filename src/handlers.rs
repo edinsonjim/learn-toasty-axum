@@ -7,7 +7,7 @@ use serde_json::json;
 
 use crate::AppState;
 use crate::error::ApiError;
-use crate::models::{CreateFamily, Family, FamilyResponse};
+use crate::models::{CreateFamily, Family, FamilyResponse, UpdateFamily};
 
 pub async fn health() -> Json<serde_json::Value> {
     Json(json!({ "status": "ok" }))
@@ -63,4 +63,36 @@ pub async fn get_family(
         Some(family) => Ok(Json(family.into())),
         None => Err(ApiError::NotFound),
     }
+}
+
+pub async fn update_family(
+    State(state): State<AppState>,
+    Path(id): Path<u64>,
+    Json(payload): Json<UpdateFamily>,
+) -> Result<Json<FamilyResponse>, ApiError> {
+    let mut guard = state.db.lock().await;
+    let db = &mut *guard;
+
+    let family: Vec<Family> = Family::filter(
+        Family::fields()
+            .id()
+            .eq(id)
+            .and(Family::fields().deleted_at().is_none()),
+    )
+    .exec(db)
+    .await?;
+
+    let mut family = match family.into_iter().next() {
+        Some(family) => family,
+        None => return Err(ApiError::NotFound),
+    };
+
+    toasty::update!(family {
+        name: payload.name,
+        summary: payload.summary,
+    })
+    .exec(db)
+    .await?;
+
+    Ok(Json(family.into()))
 }

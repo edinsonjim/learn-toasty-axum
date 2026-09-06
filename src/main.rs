@@ -35,7 +35,10 @@ async fn main() -> anyhow::Result<()> {
             "/families",
             axum::routing::get(handlers::list_families).post(handlers::create_family),
         )
-        .route("/families/{id}", axum::routing::get(handlers::get_family))
+        .route(
+            "/families/{id}",
+            axum::routing::get(handlers::get_family).put(handlers::update_family),
+        )
         .with_state(state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));

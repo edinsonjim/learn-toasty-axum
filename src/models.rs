@@ -35,3 +35,9 @@ pub struct CreateFamily {
     pub name: String,
     pub summary: Option<String>,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateFamily {
+    pub name: String,
+    pub summary: Option<String>,
+}
