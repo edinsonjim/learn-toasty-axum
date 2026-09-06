@@ -1,5 +1,4 @@
 use std::net::SocketAddr;
-use std::sync::Arc;
 
 use axum::{Router, routing::get};
 
@@ -9,7 +8,7 @@ mod models;
 
 #[derive(Clone)]
 pub struct AppState {
-    db: Arc<tokio::sync::Mutex<toasty::Db>>,
+    db: toasty::Db,
 }
 
 #[tokio::main]
@@ -25,9 +24,7 @@ async fn main() -> anyhow::Result<()> {
 
     db.push_schema().await?;
 
-    let state = AppState {
-        db: Arc::new(tokio::sync::Mutex::new(db)),
-    };
+    let state = AppState { db };
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     let listener = tokio::net::TcpListener::bind(addr).await?;
@@ -75,9 +72,7 @@ mod tests {
 
         db.push_schema().await.unwrap();
 
-        AppState {
-            db: Arc::new(tokio::sync::Mutex::new(db)),
-        }
+        AppState { db }
     }
 
     async fn send(app: &Router, req: Request<Body>) -> (StatusCode, Value) {
@@ -218,9 +213,8 @@ mod tests {
         let (status, _) = send(&app, plain_request("DELETE", "/families/1")).await;
         assert_eq!(status, StatusCode::NO_CONTENT);
 
-        let mut guard = state.db.lock().await;
-        let db = &mut *guard;
-        let all: Vec<models::Family> = models::Family::all().exec(db).await.unwrap();
+        let mut db = state.db.clone();
+        let all: Vec<models::Family> = models::Family::all().exec(&mut db).await.unwrap();
         assert_eq!(all.len(), 1);
         assert!(all[0].deleted_at.is_some());
     }

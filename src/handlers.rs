@@ -17,14 +17,13 @@ pub async fn create_family(
     State(state): State<AppState>,
     Json(payload): Json<CreateFamily>,
 ) -> Result<(StatusCode, Json<FamilyResponse>), ApiError> {
-    let mut guard = state.db.lock().await;
-    let db = &mut *guard;
+    let mut db = state.db.clone();
 
     let family = toasty::create!(Family {
         name: payload.name,
         summary: payload.summary,
     })
-    .exec(db)
+    .exec(&mut db)
     .await?;
 
     Ok((StatusCode::CREATED, Json(family.into())))
@@ -33,11 +32,10 @@ pub async fn create_family(
 pub async fn list_families(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<FamilyResponse>>, ApiError> {
-    let mut guard = state.db.lock().await;
-    let db = &mut *guard;
+    let mut db = state.db.clone();
 
     let families: Vec<Family> = Family::filter(Family::fields().deleted_at().is_none())
-        .exec(db)
+        .exec(&mut db)
         .await?;
 
     Ok(Json(families.into_iter().map(Into::into).collect()))
@@ -47,8 +45,7 @@ pub async fn get_family(
     State(state): State<AppState>,
     Path(id): Path<u64>,
 ) -> Result<Json<FamilyResponse>, ApiError> {
-    let mut guard = state.db.lock().await;
-    let db = &mut *guard;
+    let mut db = state.db.clone();
 
     let family: Vec<Family> = Family::filter(
         Family::fields()
@@ -56,7 +53,7 @@ pub async fn get_family(
             .eq(id)
             .and(Family::fields().deleted_at().is_none()),
     )
-    .exec(db)
+    .exec(&mut db)
     .await?;
 
     match family.into_iter().next() {
@@ -70,8 +67,7 @@ pub async fn update_family(
     Path(id): Path<u64>,
     Json(payload): Json<UpdateFamily>,
 ) -> Result<Json<FamilyResponse>, ApiError> {
-    let mut guard = state.db.lock().await;
-    let db = &mut *guard;
+    let mut db = state.db.clone();
 
     let family: Vec<Family> = Family::filter(
         Family::fields()
@@ -79,7 +75,7 @@ pub async fn update_family(
             .eq(id)
             .and(Family::fields().deleted_at().is_none()),
     )
-    .exec(db)
+    .exec(&mut db)
     .await?;
 
     let mut family = match family.into_iter().next() {
@@ -91,7 +87,7 @@ pub async fn update_family(
         name: payload.name,
         summary: payload.summary,
     })
-    .exec(db)
+    .exec(&mut db)
     .await?;
 
     Ok(Json(family.into()))
@@ -101,11 +97,10 @@ pub async fn delete_family(
     State(state): State<AppState>,
     Path(id): Path<u64>,
 ) -> Result<StatusCode, ApiError> {
-    let mut guard = state.db.lock().await;
-    let db = &mut *guard;
+    let mut db = state.db.clone();
 
     let family: Vec<Family> = Family::filter(Family::fields().id().eq(id))
-        .exec(db)
+        .exec(&mut db)
         .await?;
 
     let mut family = match family.into_iter().next() {
@@ -117,7 +112,7 @@ pub async fn delete_family(
         toasty::update!(family {
             deleted_at: Some(jiff::Timestamp::now()),
         })
-        .exec(db)
+        .exec(&mut db)
         .await?;
     }
 

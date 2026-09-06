@@ -61,8 +61,9 @@ curl -X DELETE http://localhost:3000/families/1
 - The schema is created with `Db::push_schema` for prototyping. Toasty also
   ships a migration system for when the model stabilizes and data must be
   preserved across schema changes.
-- The single `Db` handle is shared through axum state behind `Arc<Mutex<_>>`
-  because Toasty operations take the handle by mutable reference.
+- The `Db` handle lives in axum state. Each handler clones it cheaply to
+  obtain its own handle over the same connection pool, since Toasty
+  operations take the handle by mutable reference.
 
 [Axum]: https://github.com/tokio-rs/axum
 [Toasty]: https://github.com/tokio-rs/toasty
