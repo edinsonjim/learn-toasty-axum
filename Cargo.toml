@@ -14,3 +14,7 @@ tracing-subscriber = "0.3"
 anyhow = "1"
 toasty = { version = "0.10", features = ["sqlite", "jiff"] }
 jiff = "0.2"
+
+[dev-dependencies]
+http-body-util = "0.1"
+tower = { version = "0.5", features = ["util"] }

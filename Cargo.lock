@@ -1824,12 +1824,14 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
+ "http-body-util",
  "jiff",
  "serde",
  "serde_json",
  "thiserror",
  "toasty",
  "tokio",
+ "tower",
  "tracing",
  "tracing-subscriber",
 ]
