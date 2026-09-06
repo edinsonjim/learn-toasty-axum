@@ -1,4 +1,8 @@
-use axum::{Json, extract::State, http::StatusCode};
+use axum::{
+    Json,
+    extract::{Path, State},
+    http::StatusCode,
+};
 use serde_json::json;
 
 use crate::AppState;
@@ -37,4 +41,26 @@ pub async fn list_families(
         .await?;
 
     Ok(Json(families.into_iter().map(Into::into).collect()))
+}
+
+pub async fn get_family(
+    State(state): State<AppState>,
+    Path(id): Path<u64>,
+) -> Result<Json<FamilyResponse>, ApiError> {
+    let mut guard = state.db.lock().await;
+    let db = &mut *guard;
+
+    let family: Vec<Family> = Family::filter(
+        Family::fields()
+            .id()
+            .eq(id)
+            .and(Family::fields().deleted_at().is_none()),
+    )
+    .exec(db)
+    .await?;
+
+    match family.into_iter().next() {
+        Some(family) => Ok(Json(family.into())),
+        None => Err(ApiError::NotFound),
+    }
 }

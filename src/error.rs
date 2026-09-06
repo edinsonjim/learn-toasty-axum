@@ -7,6 +7,8 @@ use serde_json::json;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ApiError {
+    #[error("family not found")]
+    NotFound,
     #[error("internal database error")]
     Database(#[from] toasty::Error),
 }
@@ -14,6 +16,7 @@ pub enum ApiError {
 impl ApiError {
     fn status(&self) -> StatusCode {
         match self {
+            ApiError::NotFound => StatusCode::NOT_FOUND,
             ApiError::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
